@@ -1,27 +1,41 @@
 \documentclass{article}
 \usepackage[margin=5mm]{geometry}
 \usepackage{graphicx}
-\graphicspath{{images/}}
-\usepackage{pgffor}
 
 \pagestyle{empty}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0pt}
 
-\newcommand{\includeNumberedImage}[1]{%
+\newcommand{\includeSortedImage}[1]{%
   \noindent
-  \ifnum#1<10
-    \includegraphics[width=\linewidth,height=0.45\textheight,keepaspectratio]{00#1.png}%
-  \else
-    \ifnum#1<100
-      \includegraphics[width=\linewidth,height=0.45\textheight,keepaspectratio]{0#1.png}%
-    \else
-      \includegraphics[width=\linewidth,height=0.45\textheight,keepaspectratio]{#1.png}%
-    \fi
-  \fi
-  \par\nointerlineskip
+  \makebox[\linewidth][c]{\includegraphics[width=\linewidth,height=0.45\textheight,keepaspectratio]{images/#1}}%
+  \par
+  \vspace{5pt}
 }
 
 \begin{document}
-\foreach \n in {1,...,65}{\includeNumberedImage{\n}}
+\directlua{
+  local lfs = require("lfs")
+  local images = {}
+
+  for filename in lfs.dir("images") do
+    local lastDot = 0
+    for position = 1, string.len(filename) do
+      if string.byte(filename, position) == 46 then
+        lastDot = position
+      end
+    end
+    local extension = string.lower(string.sub(filename, lastDot + 1))
+    if extension == "png" or extension == "jpg" or extension == "jpeg" or extension == "pdf" then
+      table.insert(images, filename)
+    end
+  end
+
+  table.sort(images)
+  for _, filename in ipairs(images) do
+    tex.sprint(string.char(92) .. "includeSortedImage{")
+    tex.sprint(-2, filename)
+    tex.sprint("}")
+  end
+}
 \end{document}
