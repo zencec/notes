@@ -1,3 +1,4 @@
+% !TeX program = pdflatex
 \documentclass{article}
 \usepackage[margin=5mm]{geometry}
 \usepackage{graphicx}
@@ -13,29 +14,28 @@
   \vspace{5pt}
 }
 
-\begin{document}
-\directlua{
-  local lfs = require("lfs")
-  local images = {}
-
-  for filename in lfs.dir("images") do
-    local lastDot = 0
-    for position = 1, string.len(filename) do
-      if string.byte(filename, position) == 46 then
-        lastDot = position
-      end
-    end
-    local extension = string.lower(string.sub(filename, lastDot + 1))
-    if extension == "png" or extension == "jpg" or extension == "jpeg" or extension == "pdf" then
-      table.insert(images, filename)
-    end
-  end
-
-  table.sort(images)
-  for _, filename in ipairs(images) do
-    tex.sprint(string.char(92) .. "includeSortedImage{")
-    tex.sprint(-2, filename)
-    tex.sprint("}")
-  end
+\newcommand{\includeNumberedImage}[1]{%
+  \ifnum#1<10
+    \edef\imageName{00#1}%
+  \else
+    \ifnum#1<100
+      \edef\imageName{0#1}%
+    \else
+      \edef\imageName{#1}%
+    \fi
+  \fi
+  \IfFileExists{images/\imageName.jpeg}{\includeSortedImage{\imageName.jpeg}}{}%
+  \IfFileExists{images/\imageName.jpg}{\includeSortedImage{\imageName.jpg}}{}%
+  \IfFileExists{images/\imageName.pdf}{\includeSortedImage{\imageName.pdf}}{}%
+  \IfFileExists{images/\imageName.png}{\includeSortedImage{\imageName.png}}{}%
 }
+
+\begin{document}
+\newcount\imageIndex
+\imageIndex=1
+\loop
+  \includeNumberedImage{\the\imageIndex}
+  \advance\imageIndex by 1
+\ifnum\imageIndex<1000
+\repeat
 \end{document}
